@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Swiggy Price Calculator</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #fff6ef;
+    }
+
+    .landing {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .image-container {
+      margin-top: 20px;
+    }
+
+    .image-container img {
+      max-width: 90vw;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+
+    .instructions {
+      margin-top: 20px;
+      font-size: 18px;
+      line-height: 1.6;
+      max-width: 90vw;
+    }
+
+    .button {
+      margin-top: 25px;
+      background-color: #ff6b00;
+      color: white;
+      padding: 12px 25px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .lang-toggle {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #333;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #mainContent {
+      display: none;
+      padding: 20px;
+      max-width: 500px;
+      margin: auto;
+    }
+
+    .input-group {
+      margin: 15px 0;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+
+    .btn {
+      background-color: #ff6f00;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 6px;
+      margin-top: 20px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .error {
+      color: red;
+      font-size: 14px;
+      display: none;
+      margin-top: 5px;
+    }
+
+    .final-box {
+      background: white;
+      border-radius: 10px;
+      padding: 25px;
+      text-align: center;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      display: none;
+      margin-top: 20px;
+    }
+
+    #orderBtn {
+      margin-top: 20px;
+      background-color: #25D366;
+    }
+
+    .settings {
+      font-size: 12px;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      cursor: pointer;
+      background: #ccc;
+      padding: 5px 10px;
+      border-radius: 5px;
+    }
+
+    #adminBox {
+      position: fixed;
+      bottom: 70px;
+      right: 20px;
+      background: #fff;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      display: none;
+    }
+
+    #adminBox input {
+      width: 80px;
+      margin: 5px;
+    }
+
+    .close-admin {
+      font-size: 12px;
+      color: red;
+      cursor: pointer;
+      float: right;
+    }
+  </style>
+</head>
+<body>
+
+<button class="lang-toggle" onclick="toggleLanguage()">हिंदी</button>
+
+<div id="landing" class="landing">
+  <h2 id="howToUse">How to Use</h2>
+  <div class="image-container">
+<img src="https://i.ibb.co/GvdwqBgR/IMG-20250409-100556.jpg" alt="Example"/>
+
+  </div>
+  <div id="instructions" class="instructions">
+    <ol>
+      <li>Enter your food amount</li>
+      <li>Enter restaurant tax and GST and platform fee if applicable (gst + platform fee ek sath jor ke dale)</li>
+      <li>Distance enter kare Km me</li>
+    </ol>
+  </div>
+  <button class="button" onclick="showMain()">Get Started</button>
+</div>
+
+<div id="mainContent">
+  <h2 style="text-align:center;">Swiggy Final Price Calculator</h2>
+
+  <div class="input-group">
+    <label>Item Total (₹):</label>
+    <input type="number" id="amount" />
+    <div class="error" id="amountError">Minimum Order value is ₹199 for discount.</div>
+  </div>
+
+  <div class="input-group">
+    <label>Distance (km):</label>
+    <input type="number" id="distance" />
+    <div class="error" id="distanceError">Free delivery only up to 7 km.</div>
+  </div>
+
+  <div class="input-group">
+    <label>Tax Amount (₹):</label>
+    <input type="number" id="tax" />
+  </div>
+
+  <button class="btn" onclick="calculate()">Check Final Price</button>
+
+  <div class="final-box" id="finalBox"></div>
+  <button class="btn" id="orderBtn" onclick="sendOrder()" style="display:none;">Order Here</button>
+</div>
+
+<div class="settings" onclick="toggleAdmin()">⚙️</div>
+
+<div id="adminBox">
+  <span class="close-admin" onclick="toggleAdmin()">✖</span>
+  <p><strong>Admin Discount Settings</strong></p>
+  <label>₹199+ Discount:</label><input type="number" id="d100" value="100"><br>
+  <label>₹299+ Discount:</label><input type="number" id="d125" value="125"><br>
+  <button onclick="updateDiscounts()">Save</button>
+</div>
+
+<script>
+  let isHindi = false;
+  let discount1 = 100;
+  let discount2 = 125;
+
+  function toggleLanguage() {
+    isHindi = !isHindi;
+    document.querySelector('.lang-toggle').innerText = isHindi ? 'English' : 'हिंदी';
+    document.getElementById('howToUse').innerText = isHindi ? 'कैसे उपयोग करें' : 'How to Use';
+    document.getElementById('instructions').innerHTML = isHindi
+      ? `<ol>
+          <li>अपना फूड अमाउंट दर्ज करें</li>
+          <li>रेस्टोरेंट टैक्स और जीएसटी व प्लेटफार्म फीस (यदि लागू हो) जोड़कर डालें</li>
+          <li>डिस्टेंस (किमी में) दर्ज करें</li>
+        </ol>`
+      : `<ol>
+          <li>Enter your food amount</li>
+          <li>Enter restaurant tax and GST and platform fee if applicable (gst + platform fee ek sath jor ke dale)</li>
+          <li>Distance enter kare Km me</li>
+        </ol>`;
+  }
+
+  function showMain() {
+    document.getElementById('landing').style.display = 'none';
+    document.getElementById('mainContent').style.display = 'block';
+  }
+function toggleAdmin() {
+  const adminBox = document.getElementById('adminBox');
+  if (adminBox.style.display === 'block') {
+    adminBox.style.display = 'none';
+  } else {
+    const password = prompt("Enter Admin Password:");
+    if (password === 'hks') {
+      adminBox.style.display = 'block';
+    } else {
+      alert("Incorrect password!");
+    }
+  }
+}
+
+  
+
+  function updateDiscounts() {
+    discount1 = parseInt(document.getElementById('d100').value);
+    discount2 = parseInt(document.getElementById('d125').value);
+    alert("Discounts updated successfully!");
+    toggleAdmin();
+  }
+
+  function calculate() {
+    let amount = parseFloat(document.getElementById('amount').value);
+    let distance = parseFloat(document.getElementById('distance').value);
+    let tax = parseFloat(document.getElementById('tax').value);
+
+    let error = false;
+    document.getElementById('amountError').style.display = 'none';
+    document.getElementById('distanceError').style.display = 'none';
+
+    if (isNaN(amount) || isNaN(distance) || isNaN(tax)) {
+      alert("Please enter all fields correctly.");
+      return;
+    }
+
+    if (amount < 199) {
+      document.getElementById('amountError').style.display = 'block';
+      error = true;
+    }
+
+    if (distance > 7) {
+      document.getElementById('distanceError').style.display = 'block';
+      error = true;
+    }
+
+    if (error) return;
+
+    let discount = amount >= 299 ? discount2 : (amount >= 199 ? discount1 : 0);
+    let finalAmount = amount + tax - discount;
+
+    document.getElementById('finalBox').innerHTML = `
+      <h3>Final Amount: ₹${finalAmount.toFixed(2)}</h3>
+    `;
+    document.getElementById('finalBox').style.display = 'block';
+    document.getElementById('orderBtn').style.display = 'inline-block';
+
+    // Store for Telegram
+    window.orderDetails = {
+      amount, distance, tax, discount, finalAmount
+    };
+  }
+
+  function sendOrder() {
+    const { amount, distance, tax, discount, finalAmount } = window.orderDetails;
+    const message = `✅ New Swiggy Check:%0A%0AAmount: ₹${amount.toFixed(2)}%0ADistance: ${distance.toFixed(2)} km%0ATax: ₹${tax.toFixed(2)}%0ADiscount: ₹${discount}%0A%0A➡️ Final Amount: ₹${finalAmount.toFixed(2)}`;
+
+    fetch(`https://api.telegram.org/bot6552027618:AAHn6O07IKi6qBDUh07adGEEcsul5tjO0DE/sendMessage?chat_id=7241783674&text=${message}`)
+      .then(() => {
+        window.location.href = "https://t.me/Katiharvloger2?text=Hello, I want to order a Food From swiggy.";
+      });
+  }
+</script>
+
+</body>
+</html>
